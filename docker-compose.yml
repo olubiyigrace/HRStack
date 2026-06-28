@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:17.5
+    container_name: hr-stack-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/data
+
+    ports:
+      - "${DB_PORT:-5443}:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: hr-stack-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: hr-stack-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
