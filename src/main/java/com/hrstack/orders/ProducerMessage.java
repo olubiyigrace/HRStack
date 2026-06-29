@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProducerMessage {
     private String email;
+    private String otp;
+    private String purpose;
 }

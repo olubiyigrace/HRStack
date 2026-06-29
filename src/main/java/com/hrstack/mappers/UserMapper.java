@@ -1,5 +1,8 @@
-package com.hrstack.user;
+package com.hrstack.mappers;
 
+import com.hrstack.dto.requestDto.RegisterUserRequest;
+import com.hrstack.entitys.User;
+import com.hrstack.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,5 +1,7 @@
-package com.hrstack.orders;
+package com.hrstack.controllers;
 
+import com.hrstack.orders.OrderProducer;
+import com.hrstack.orders.ProducerMessage;
 import com.hrstack.utils.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.hrstack.otp;
+package com.hrstack.dto.requestDto;
 
 import lombok.Builder;
 import lombok.Data;

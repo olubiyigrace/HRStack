@@ -1,6 +1,7 @@
-package com.hrstack.user;
+package com.hrstack.entitys;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hrstack.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;

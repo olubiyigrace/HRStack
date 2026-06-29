@@ -1,5 +1,6 @@
-package com.hrstack.user;
+package com.hrstack.respository;
 
+import com.hrstack.entitys.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package com.hrstack.utils;
 
-import com.hrstack.user.User;
-import com.hrstack.user.UserRepository;
+import com.hrstack.entitys.User;
+import com.hrstack.respository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
