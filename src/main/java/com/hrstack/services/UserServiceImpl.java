@@ -1,9 +1,15 @@
-package com.hrstack.user;
+package com.hrstack.services;
 
+import com.hrstack.dto.RegisterUserRequest;
+import com.hrstack.entities.User;
+import com.hrstack.enums.OtpPurpose;
 import com.hrstack.exceptions.DuplicateResourceException;
 import com.hrstack.exceptions.InvalidRequestException;
-import com.hrstack.otp.OtpRequest;
-import com.hrstack.otp.OtpService;
+import com.hrstack.dto.OtpRequest;
+import com.hrstack.mappers.UserMapper;
+import com.hrstack.orders.OrderProducer;
+import com.hrstack.orders.ProducerMessage;
+import com.hrstack.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,11 +18,12 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final OrderProducer orderProducer;
 
 
     @Override
@@ -35,7 +42,15 @@ public class UserServiceImpl implements UserService{
         String otp = otpService.createOtp(
                 OtpRequest.builder()
                         .email(request.getEmail())
-                        .purpose("verifyAccount")
+                        .purpose(OtpPurpose.VERIFY_ACCOUNT)
+                        .build()
+        );
+
+        orderProducer.sendMessage(
+                ProducerMessage.builder()
+                        .email(request.getEmail())
+                        .otp(otp)
+                        .purpose(OtpPurpose.VERIFY_ACCOUNT)
                         .build()
         );
     }
