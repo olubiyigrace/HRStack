@@ -31,7 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(final HttpServletRequest request,
                                     final HttpServletResponse response,
                                     final FilterChain filterChain) throws ServletException, IOException {
-
 //        if (request.getRequestURI().startsWith("/api/v1/auth")) {
 //            filterChain.doFilter(request, response);
 //            return;
@@ -63,18 +62,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 Collections.singletonList(authority)
                         );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
 //                Optional<UserSession> session = userSessionRepository.findByAccessToken(jwt);
 //                if (session.isPresent() && session.get().isRevoked()) {
 //                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 //                    response.getWriter().write("Session has been revoked");
 //                    return;
 //                }
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("Authentication successfully stored: {}",
-                        SecurityContextHolder.getContext().getAuthentication());
-                log.debug("User authenticated for user ID:{}, institution: {}, role: {}", userId, workspaceUrl, role);
             }
         } catch (final Exception e) {
             log.error("Error authenticating user", e);
