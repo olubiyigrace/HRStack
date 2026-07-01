@@ -62,10 +62,9 @@ public class OtpService {
             return "OTP has expired";
         }
         newOtp.setUsed(true);
-
-//        User user = new User();
-//        user.setIsVerified(true);
-//        userRepository.save(user);
+        User user = userRepository.findByEmail(request.getEmail());
+        user.setIsVerified(true);
+        userRepository.save(user);
 
         otpRepository.save(newOtp);
         return "OTP verified successfully";
