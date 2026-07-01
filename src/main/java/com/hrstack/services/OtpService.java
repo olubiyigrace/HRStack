@@ -3,9 +3,12 @@ package com.hrstack.services;
 import com.hrstack.dto.OtpRequest;
 import com.hrstack.dto.OtpVerifyRequest;
 import com.hrstack.entities.Otp;
+import com.hrstack.entities.User;
 import com.hrstack.enums.OtpPurpose;
+import com.hrstack.exceptions.DuplicateResourceException;
 import com.hrstack.exceptions.InvalidRequestException;
 import com.hrstack.repositories.OtpRepository;
+import com.hrstack.repositories.UserRepository;
 import com.hrstack.utils.AppUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class OtpService {
     private final OtpRepository otpRepository;
     private final PasswordEncoder passwordEncoder;
     private final StringRedisTemplate redisTemplate;
+    private final UserRepository userRepository;
 
 
     public String createOtp(OtpRequest request) {
@@ -58,8 +62,15 @@ public class OtpService {
             return "OTP has expired";
         }
         newOtp.setUsed(true);
+
+//        User user = new User();
+//        user.setIsVerified(true);
+//        userRepository.save(user);
+
         otpRepository.save(newOtp);
         return "OTP verified successfully";
+
+
     }
 
     public String resendOtp(OtpRequest request) {
@@ -67,7 +78,10 @@ public class OtpService {
         String otpCode = AppUtils.generateOtp();
         Optional<Otp> existingOtp = otpRepository.findTopByEmailAndPurposeOrderByCreatedAtDesc(request.getEmail(), request.getPurpose());
 
-        if (existingOtp.isPresent()) {
+       if(existingOtp.isPresent() && existingOtp.get().getUsed().equals(true)){
+           throw new DuplicateResourceException("Duplicate verification not allowed");
+       }
+        else if (existingOtp.isPresent() && existingOtp.get().getUsed().equals(false)) {
             Otp otp = existingOtp.get();
             otp.setOtp(passwordEncoder.encode(otpCode));
             otp.setUsed(false);

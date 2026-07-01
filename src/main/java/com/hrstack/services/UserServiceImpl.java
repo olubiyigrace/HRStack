@@ -70,6 +70,5 @@ public class UserServiceImpl implements UserService {
                         .purpose(OtpPurpose.VERIFY_ACCOUNT)
                         .build()
         );
-
     }
 }
