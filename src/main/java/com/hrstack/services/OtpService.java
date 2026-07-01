@@ -44,32 +44,28 @@ public class OtpService {
         return otpCode;
     }
 
-    public String verifyOtp(OtpVerifyRequest request) {
+    public void verifyOtp(OtpVerifyRequest request) {
         Optional<Otp> existingOtp = otpRepository.findTopByEmailAndPurposeOrderByCreatedAtDesc(request.getEmail(), request.getPurpose());
         if (existingOtp.isEmpty()) {
-            return "OTP not found";
+            throw new InvalidRequestException("OTP not found");
         }
 
         Otp newOtp = existingOtp.get();
         boolean isMatch = passwordEncoder.matches(request.getPlainOtp(), newOtp.getOtp());
         if (!isMatch) {
-            return "Invalid OTP";
+            throw new InvalidRequestException("Invalid OTP");
         }
         if (newOtp.getUsed().equals(true)) {
-            return "OTP already used";
+            throw new DuplicateResourceException("OTP already used");
         }
         if (newOtp.getExpiresAt().isBefore(LocalDateTime.now())) {
-            return "OTP has expired";
+            throw new InvalidRequestException("OTP has expired");
         }
         newOtp.setUsed(true);
         User user = userRepository.findByEmail(request.getEmail());
         user.setIsVerified(true);
         userRepository.save(user);
-
         otpRepository.save(newOtp);
-        return "OTP verified successfully";
-
-
     }
 
     public String resendOtp(OtpRequest request) {
