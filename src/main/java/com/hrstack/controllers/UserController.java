@@ -35,4 +35,10 @@ public class UserController {
         userService.resendVerificationOtp(email);
         return ResponseEntity.ok(ApiResponse.success(true, "OTP sent successfully.", null));
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<String>> login(@RequestParam String email) {
+        userService.login(email);
+        return ResponseEntity.ok(ApiResponse.success(true, "Login successful", null));
+    }
 }
