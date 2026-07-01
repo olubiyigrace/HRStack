@@ -25,11 +25,13 @@ create table users
 
 create table otp
 (
-    id      bigserial primary key,
-    email   varchar(255) not null,
-    otp     varchar(255) not null,
-    used    boolean      not null,
-    purpose varchar(255) not null
+    id         bigserial primary key,
+    email      varchar(255) not null,
+    otp        varchar(255) not null,
+    used       boolean      not null,
+    created_at timestamp(6) not null,
+    expires_at timestamp(6) not null,
+    purpose    varchar(255) not null
         constraint otp_purpose_check
             check (
                 (purpose)::text = ANY (
