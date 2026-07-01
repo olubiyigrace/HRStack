@@ -21,14 +21,13 @@ public class UserController {
     @PostMapping("/sign-up")
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterUserRequest request) {
         userService.create(request);
-        return ResponseEntity.ok(ApiResponse.success(true, "Registration successful. Check your email for the verification code.", null)
-        );
+        return ResponseEntity.ok(ApiResponse.success(true, "Registration successful. Check your email for the verification code.", null));
     }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<String>> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
-        String response = otpService.verifyOtp(request);
-        return ResponseEntity.ok(ApiResponse.success(true, response, null));
+        otpService.verifyOtp(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "Verification successful", null));
     }
 
     @PostMapping("/resend-otp")
