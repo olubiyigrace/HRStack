@@ -54,4 +54,24 @@ public class UserServiceImpl implements UserService {
                         .build()
         );
     }
+
+    @Override
+    public void resendVerificationOtp(String email) {
+        String otp =
+                otpService.resendOtp(
+                        OtpRequest.builder()
+                                .email(email)
+                                .purpose(OtpPurpose.VERIFY_ACCOUNT)
+                                .build()
+                );
+
+        orderProducer.sendMessage(
+                ProducerMessage.builder()
+                        .email(email)
+                        .otp(otp)
+                        .purpose(OtpPurpose.VERIFY_ACCOUNT)
+                        .build()
+        );
+
+    }
 }

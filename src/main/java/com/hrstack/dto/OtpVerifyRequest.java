@@ -1,5 +1,6 @@
 package com.hrstack.dto;
 
+import com.hrstack.enums.OtpPurpose;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,4 +11,5 @@ import lombok.NoArgsConstructor;
 public class OtpVerifyRequest {
     private String plainOtp;
     private String email;
+    private OtpPurpose purpose;
 }

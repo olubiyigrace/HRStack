@@ -9,10 +9,7 @@ import com.hrstack.utils.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -22,7 +19,7 @@ public class UserController {
     private final UserService userService;
     private final OtpService otpService;
 
-    @PostMapping("/register")
+    @PostMapping("/sign-up")
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterUserRequest request) {
         userService.create(request);
         return ResponseEntity.ok(ApiResponse.success(true, "Registration successful. Check your email for the verification code.", null)
@@ -33,5 +30,11 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
         String response = otpService.verifyOtp(request);
         return ResponseEntity.ok(ApiResponse.success(true, response, null));
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<ApiResponse<String>> resendOtp(@RequestParam String email) {
+        userService.resendVerificationOtp(email);
+        return ResponseEntity.ok(ApiResponse.success(true, "OTP sent successfully.", null));
     }
 }
