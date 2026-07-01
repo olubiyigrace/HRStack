@@ -22,6 +22,10 @@ public class OrderConsumer {
             emailService.sendOtpVerificationEmail(request.getEmail(), request.getOtp());
             return;
         }
+        if (request.getPurpose().equals(OtpPurpose.RESET_PASSWORD) && request.getOtp() != null ) {
+            emailService.sendOtpPasswordResetEmail(request.getEmail(), request.getOtp());
+            return;
+        }
         emailService.sendSimpleEmail(
                 request.getEmail(),
                 "HRStack Notification",

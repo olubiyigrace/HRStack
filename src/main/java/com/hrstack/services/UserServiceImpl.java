@@ -2,6 +2,7 @@ package com.hrstack.services;
 
 import com.hrstack.dto.RegisterUserRequest;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
+import com.hrstack.entities.Otp;
 import com.hrstack.entities.User;
 import com.hrstack.enums.OtpPurpose;
 import com.hrstack.exceptions.DuplicateResourceException;
@@ -10,12 +11,10 @@ import com.hrstack.dto.requestDto.OtpRequest;
 import com.hrstack.mappers.UserMapper;
 import com.hrstack.orders.OrderProducer;
 import com.hrstack.orders.ProducerMessage;
+import com.hrstack.repositories.OtpRepository;
 import com.hrstack.repositories.UserRepository;
 import com.hrstack.security.JwtService;
-import com.hrstack.utils.ChangePasswordRequest;
-import com.hrstack.utils.CurrentUserUtil;
-import com.hrstack.utils.LoginRequest;
-import com.hrstack.utils.LoginResponse;
+import com.hrstack.utils.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -41,6 +41,7 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final CurrentUserUtil currentUserUtil;
+    private final OtpRepository otpRepository;
 
 
     @Override
@@ -200,27 +201,43 @@ public class UserServiceImpl implements UserService {
         userRepository.save(loggedInUser);
         log.info("password changed successfully");
     }
-//
-//    @Override
-//    public void forgotPassword(ForgotPasswordRequest request) throws MessagingException {
-//        User user = userRepository.findByEmail(request.getEmail())
-//                .orElseThrow(() -> new UsernameNotFoundException("Email not found"));
-//
-//        String token = UUID.randomUUID().toString();
-//        user.setResetPasswordToken(passwordEncoder.encode(token));
-//        user.setResetPasswordTokenExpiry(LocalDateTime.now().plusMinutes(10));
-//        userRepository.save(user);
-//
-//        Map<String, Object> model = new HashMap<>();
-//        model.put("name", user.getName());
-//        model.put("resetUrl", "https://multitenantbanking.com/api/v1/auth/reset-password?token=" + token);
-//
-//        emailService.sendVerificationEmail(
-//                user.getEmail(),
-//                "Reset Password",
-//                "forgotpassword",
-//                model
-//        );
-//        log.info("Reset link sent");
-//    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User existingUser = userRepository.findByEmail(request.getEmail());
+        if(existingUser == null){
+            throw new InvalidRequestException(request.getEmail() + " not found.");
+        }
+        String otp = otpService.createOtp(
+                OtpRequest.builder()
+                        .email(request.getEmail())
+                        .purpose(OtpPurpose.RESET_PASSWORD)
+                        .build()
+        );
+        orderProducer.sendMessage(
+                ProducerMessage.builder()
+                        .email(request.getEmail())
+                        .otp(otp)
+                        .purpose(OtpPurpose.RESET_PASSWORD)
+                        .build()
+        );
+        log.info("Reset link sent");
+    }
+
+    @Override
+    public void resetPassword(String resetToken, ResetPasswordRequest request) {
+        if(!jwtService.validatePasswordResetToken(resetToken)){
+            throw  new InvalidRequestException("Invalid token");
+        }
+        String email = jwtService.getEmailFromResetToken(resetToken);
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new InvalidRequestException("User not found");
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new InvalidRequestException("Passwords do not match");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 }

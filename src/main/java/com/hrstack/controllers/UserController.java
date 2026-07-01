@@ -6,10 +6,7 @@ import com.hrstack.services.OtpService;
 import com.hrstack.dto.requestDto.OtpVerifyRequest;
 import com.hrstack.dto.RegisterUserRequest;
 import com.hrstack.services.UserService;
-import com.hrstack.utils.ApiResponse;
-import com.hrstack.utils.ChangePasswordRequest;
-import com.hrstack.utils.LoginRequest;
-import com.hrstack.utils.LoginResponse;
+import com.hrstack.utils.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -56,5 +53,26 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         userService.changePassword(changePasswordRequest);
         return ResponseEntity.ok(ApiResponse.success(true, "Password changed successfully", null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        userService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "Password reset OTP sent successfully", null));
+    }
+
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<ApiResponse<ResetOtpResponse>> verifyResetOtp(@Valid @RequestBody VerifyResetOtpRequest request) {
+        String resetToken = otpService.verifyResetOtp(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "OTP verified successfully",
+                ResetOtpResponse.builder().resetToken(resetToken).build()));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword
+            (@RequestHeader("Authorization") String authorizationHeader, @Valid @RequestBody ResetPasswordRequest request) {
+        String resetToken = authorizationHeader.substring(7);
+        userService.resetPassword(resetToken, request);
+        return ResponseEntity.ok(ApiResponse.success(true, "Password reset successfully", null));
     }
 }

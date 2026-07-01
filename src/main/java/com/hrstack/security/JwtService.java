@@ -122,7 +122,6 @@ public class JwtService {
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-
         final Claims claims = Jwts.parser()
                 .verifyWith(publicKey)
                 .build()
@@ -132,31 +131,35 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    public String generateLoginToken(String userId) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + (5 * 60 * 1000));
+    public String generatePasswordResetToken(String email) {
         return Jwts.builder()
-                .subject(userId)
-                .claim("type", "login_token")
-                .issuedAt(now)
-                .expiration(expiry)
+                .subject(email)
+                .claim("purpose", "PASSWORD_RESET")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
     }
 
-    public void validateLoginToken(String token) {
+    public boolean validatePasswordResetToken(String token) {
         Claims claims = getClaimsFromToken(token);
-        String type = claims.get("type", String.class);
-        if (!"login_token".equals(type)) {
-            throw new InvalidRequestException("Invalid login token");
+        String type = claims.get("purpose", String.class);
+        if (!"PASSWORD_RESET".equals(type)) {
+            throw new InvalidRequestException("Invalid reset token");
         }
         if (claims.getExpiration().before(new Date())) {
-            throw new InvalidRequestException("Login token expired");
+            throw new InvalidRequestException("Reset token expired");
         }
+        return true;
     }
 
-    public String getUserIdFromLoginToken(String token) {
-        return getClaimsFromToken(token).getSubject();
+    public String getEmailFromResetToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        String purpose = claims.get("purpose", String.class);
+        if (!"PASSWORD_RESET".equals(purpose)) {
+            throw new InvalidRequestException("Invalid reset token");
+        }
+        return claims.getSubject();
     }
 
     private PrivateKey loadPrivateKey(final String privateKeyPath) throws Exception {
@@ -184,11 +187,9 @@ public class JwtService {
     private PublicKey loadPublicKey(final String publicKeyPath) throws Exception {
         try (final InputStream is = JwtService.class.getClassLoader()
                 .getResourceAsStream(publicKeyPath)) {
-
             if (is == null) {
                 throw new RuntimeException("Public key not found");
             }
-
             final String key = new String(is.readAllBytes());
             final String publicKeyPEM = key
                     .replace("-----BEGIN PUBLIC KEY-----", "")

@@ -29,8 +29,6 @@ public class EmailService {
     private String fromAddress;
 
 
-
-
     public void sendOtpEmail(String to, String otp) {
         sendSimpleEmail(
                 to,
@@ -64,6 +62,22 @@ public class EmailService {
                     email,
                     "Verify your HRStack account",
                     "verifyAccount",
+                    model
+            );
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new IllegalStateException("Failed to send verification email to " + email, e);
+        }
+    }
+
+    public void sendOtpPasswordResetEmail(String email, String otp) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("otp", otp);
+
+        try {
+            sendVerificationEmail(
+                    email,
+                    "Reset Password",
+                    "resetPassword.html",
                     model
             );
         } catch (MessagingException | UnsupportedEncodingException e) {
