@@ -1,6 +1,8 @@
 package com.hrstack.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.hrstack.enums.InviteStatus;
+import com.hrstack.enums.ReportsTo;
 import com.hrstack.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -29,7 +31,22 @@ public class User implements UserDetails {
     private String companyName;
 
     @Column(nullable = false)
-    private String adminName;
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
+
+    @Enumerated(EnumType.STRING)
+    private InviteStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private ReportsTo reportsTo;
+
+    private String jobTitle;
+    private String department;
+    private String phoneNumber;
+    private String imageUrl;
+    private String imagePublicId;
 
     @Column(nullable = false, unique = true)
     private String workspaceUrl;
@@ -44,8 +61,8 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Builder.Default
-    private Boolean isVerified = false;
+    @Column(nullable = false)
+    private Boolean isVerified;
 
     @Builder.Default
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")

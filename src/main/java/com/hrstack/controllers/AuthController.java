@@ -2,9 +2,9 @@ package com.hrstack.controllers;
 
 
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
+import com.hrstack.dto.requestDto.RegisterAdminRequest;
 import com.hrstack.services.OtpService;
 import com.hrstack.dto.requestDto.OtpVerifyRequest;
-import com.hrstack.dto.requestDto.RegisterUserRequest;
 import com.hrstack.services.UserService;
 import com.hrstack.utils.*;
 import jakarta.validation.Valid;
@@ -20,7 +20,7 @@ public class AuthController {
     private final OtpService otpService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterUserRequest request) {
+    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterAdminRequest request) {
         userService.create(request);
         return ResponseEntity.ok(ApiResponse.success(true, "Registration successful. Check your email for the verification code.", null));
     }
