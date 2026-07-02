@@ -3,13 +3,15 @@ package com.hrstack.controllers;
 import com.hrstack.services.UserService;
 import com.hrstack.utils.ApiResponse;
 import com.hrstack.utils.ChangePasswordRequest;
-import com.hrstack.utils.UpdateUserProfileRequest;
+import com.hrstack.utils.UpdateProfileRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -30,10 +32,16 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(true, "Logout successful", null));
     }
 
-    @PostMapping("/edit-admin-profile")
+    @PutMapping("/edit-profile")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> update(@Valid @RequestBody UpdateUserProfileRequest request) {
-        userService.update(request);
+    public ResponseEntity<ApiResponse<String>> update(@RequestParam String id, @Valid @RequestBody UpdateProfileRequest request) {
+        userService.update(id, request);
         return ResponseEntity.ok(ApiResponse.success(true, "Profile updated successfully", null));
+    }
+
+    @PostMapping(value = "/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadProfilePicture(@RequestParam("file") MultipartFile file) {
+        userService.uploadProfilePicture(file);
+        return ResponseEntity.ok(ApiResponse.success(true, "Profile picture uploaded successfully.", null));
     }
 }

@@ -1,13 +1,14 @@
 package com.hrstack.services;
 
-import com.hrstack.dto.requestDto.RegisterUserRequest;
+import com.hrstack.dto.requestDto.RegisterAdminRequest;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
 import com.hrstack.entities.User;
 import com.hrstack.enums.OtpPurpose;
+import com.hrstack.enums.Role;
 import com.hrstack.exceptions.DuplicateResourceException;
 import com.hrstack.exceptions.InvalidRequestException;
 import com.hrstack.dto.requestDto.OtpRequest;
-import com.hrstack.mappers.UserMapper;
+import com.hrstack.mappers.AdminMapper;
 import com.hrstack.orders.OrderProducer;
 import com.hrstack.orders.ProducerMessage;
 import com.hrstack.properties.WorkspaceProperties;
@@ -25,7 +26,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,7 +39,7 @@ import java.util.UUID;
 @Slf4j
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final AdminMapper adminMapper;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final OrderProducer orderProducer;
@@ -44,10 +48,11 @@ public class UserServiceImpl implements UserService {
     private final CurrentUserUtil currentUserUtil;
     private final RedisSessionService redisSessionService;
     private final WorkspaceProperties workspaceProperties;
+    private final CloudinaryService cloudinaryService;
 
 
     @Override
-    public void create(RegisterUserRequest request) {
+    public void create(RegisterAdminRequest request) {
         Optional<User> existingUser = userRepository.findByWorkspaceUrl(workspaceProperties.getBaseUrl() + request.getWorkspaceUrl());
         if(existingUser.isPresent()){
             throw new DuplicateResourceException("Workspace already exists");
@@ -55,7 +60,9 @@ public class UserServiceImpl implements UserService {
         if (!request.getPassword().equals(request.getReEnterPassword())){
             throw new InvalidRequestException("Passwords do not match");
         }
-        User newUser = userMapper.toEntity(request);
+        User newUser = adminMapper.toEntity(request);
+        newUser.setRole(Role.ADMIN);
+        newUser.setIsVerified(false);
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         userRepository.save(newUser);
 
@@ -242,9 +249,48 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void update(UpdateUserProfileRequest request) {
-            User user = currentUserUtil.getLoggedInUser();
-            user.setAdminName(request.getAdminName());
-            userRepository.save(user);
+    public void update(String id, UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new InvalidRequestException("User not found"));
+
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setJobTitle(request.getJobTitle());
+        user.setRole(request.getRole());
+        user.setDepartment(request.getDepartment());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setReportsTo(request.getReportsTo());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void uploadProfilePicture(MultipartFile file) {
+        User user = currentUserUtil.getLoggedInUser();
+
+        if (file.isEmpty()) {
+            throw new InvalidRequestException("Please select an image.");
+        }
+        if (user.getImagePublicId() != null) {
+            cloudinaryService.delete(user.getImagePublicId());
+        }
+        List<String> allowedTypes = List.of(
+                "image/jpeg",
+                "image/png",
+                "image/jpg"
+        );
+        if (!allowedTypes.contains(file.getContentType())) {
+            throw new InvalidRequestException("Only JPG and PNG images are allowed.");
+        }
+
+        if (file.getSize() > 3 * 1024 * 1024) {
+            throw new InvalidRequestException("Image size must not exceed 3MB.");
+        }
+        ImageUploadResponse response = cloudinaryService.upload(file);
+        user.setImageUrl(response.getImageUrl());
+        user.setImagePublicId(response.getPublicId());
+        userRepository.save(user);
     }
 }
+
+
