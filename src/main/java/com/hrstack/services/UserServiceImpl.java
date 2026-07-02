@@ -10,6 +10,7 @@ import com.hrstack.dto.requestDto.OtpRequest;
 import com.hrstack.mappers.UserMapper;
 import com.hrstack.orders.OrderProducer;
 import com.hrstack.orders.ProducerMessage;
+import com.hrstack.properties.WorkspaceProperties;
 import com.hrstack.repositories.UserRepository;
 import com.hrstack.security.JwtService;
 import com.hrstack.utils.*;
@@ -42,11 +43,12 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final CurrentUserUtil currentUserUtil;
     private final RedisSessionService redisSessionService;
+    private final WorkspaceProperties workspaceProperties;
 
 
     @Override
     public void create(RegisterUserRequest request) {
-        Optional<User> existingUser = userRepository.findByWorkspaceUrl(request.getWorkspaceUrl());
+        Optional<User> existingUser = userRepository.findByWorkspaceUrl(workspaceProperties.getBaseUrl() + request.getWorkspaceUrl());
         if(existingUser.isPresent()){
             throw new DuplicateResourceException("Workspace already exists");
         }
