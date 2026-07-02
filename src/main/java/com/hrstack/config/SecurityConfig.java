@@ -1,6 +1,5 @@
 package com.hrstack.config;
 
-//    http://localhost:8080/swagger-ui/index.html#/
 import com.hrstack.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +32,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public static final String[] WHITE_LIST_URLS = {
-            "/api/v1/**",
             "/api/orders/**",
             "/api/v1/auth/**",
             "/api-docs/**",
@@ -99,8 +97,7 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "https://secsystem-emr.vercel.app",
-                "https://emr-sigma-ten.vercel.app",
-                "Postman"
+                "https://emr-sigma-ten.vercel.app"
         ));
         corsConfiguration.setAllowedMethods(List.of(
                 "GET",
