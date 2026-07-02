@@ -1,20 +1,23 @@
 package com.hrstack.dto.requestDto;
 
-import com.hrstack.enums.ReportsTo;
-import com.hrstack.enums.Role;
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterUserRequest {
+public class RegisterAdminRequest {
+    @NotBlank(message = "Company name is required")
+    private String companyName;
+
     @NotBlank(message = "Name should not be empty")
     @Pattern(regexp = "^[\\p{L}\\p{M}]+(?:[ '-][\\p{L}\\p{M}]+)*$",
             message = "Name can only contain letters, spaces, apostrophes, and hyphens.")
@@ -27,29 +30,22 @@ public class RegisterUserRequest {
     @Column(updatable = false)
     private String lastName;
 
+    @NotBlank(message = "Workspace URL is required")
+    private String workspaceUrl;
+
     @NotBlank(message = "Password should not be empty")
     @Size(min = 8, max = 20, message = "Password must be between 8 and 20 characters")
     @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*+=])(?=\\S+$).{8,}$",
             message = "Password must contain at least one uppercase, one lowercase, one digit, a character and no whitespace")
     private String password;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 20, message = "Password must be between 8 and 20 characters")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[!@#$%^&*+=])(?=\\S+$).{8,}$",
+            message = "Password must contain at least one uppercase, one lowercase, one digit, a character and no whitespace")
+    private String reEnterPassword;
+
     @NotBlank(message = "Email is required")
     @Email(message = "example@email.com")
     private String email;
-
-    @NotNull(message = "Role cannot be null")
-    private Role role;
-
-    @NotNull(message = "User has to report to someone")
-    private ReportsTo reportsTo;
-
-    @NotBlank(message = "Job title is required")
-    private String jobTitle;
-
-    @NotBlank(message = "Department is required")
-    private String department;
-
-    @NotBlank(message = "Phone number should not be empty")
-    @Pattern(regexp = "^\\+234(70|80|81|90|91)\\d{8}$", message = "Enter a valid phone number and ensure it starts with +234")
-    private String phoneNumber;
 }

@@ -1,12 +1,13 @@
 package com.hrstack.services;
 
-import com.hrstack.dto.requestDto.RegisterUserRequest;
+import com.hrstack.dto.requestDto.RegisterAdminRequest;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
 import com.hrstack.utils.*;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
-    void create(RegisterUserRequest request);
+    void create(RegisterAdminRequest request);
     void resendVerificationOtp(String email);
     LoginResponse login(LoginRequest request);
     LoginResponse refreshToken(RefreshTokenRequest request);
@@ -14,5 +15,6 @@ public interface UserService {
     void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(String token, ResetPasswordRequest request);
     void logout(HttpServletRequest request);
-    void update(UpdateUserProfileRequest registerUserRequest);
+    void update(String id, UpdateProfileRequest registerUserRequest);
+    void uploadProfilePicture(MultipartFile file);
 }

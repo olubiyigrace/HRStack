@@ -85,7 +85,6 @@ public class EmailService {
         }
     }
 
-    @Async
     public void sendVerificationEmail(String to, String subject, String templateName, Map<String, Object> templateModel)
             throws jakarta.mail.MessagingException, UnsupportedEncodingException {
 
