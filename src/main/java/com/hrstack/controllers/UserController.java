@@ -7,6 +7,7 @@ import com.hrstack.dto.requestDto.OtpVerifyRequest;
 import com.hrstack.dto.RegisterUserRequest;
 import com.hrstack.services.UserService;
 import com.hrstack.utils.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -74,5 +75,11 @@ public class UserController {
         String resetToken = authorizationHeader.substring(7);
         userService.resetPassword(resetToken, request);
         return ResponseEntity.ok(ApiResponse.success(true, "Password reset successfully", null));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout(HttpServletRequest request) {
+        userService.logout(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "Logout successful", null));
     }
 }

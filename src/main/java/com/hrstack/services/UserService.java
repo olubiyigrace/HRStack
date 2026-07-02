@@ -3,6 +3,7 @@ package com.hrstack.services;
 import com.hrstack.dto.RegisterUserRequest;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
 import com.hrstack.utils.*;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface UserService {
     void create(final RegisterUserRequest request);
@@ -12,4 +13,5 @@ public interface UserService {
     void changePassword(ChangePasswordRequest request);
     void forgotPassword(ForgotPasswordRequest request);
     void resetPassword(String token, ResetPasswordRequest request);
+    void logout(HttpServletRequest request);
 }
