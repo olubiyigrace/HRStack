@@ -2,7 +2,6 @@ package com.hrstack.services;
 
 import com.hrstack.dto.RegisterUserRequest;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
-import com.hrstack.entities.Otp;
 import com.hrstack.entities.User;
 import com.hrstack.enums.OtpPurpose;
 import com.hrstack.exceptions.DuplicateResourceException;
@@ -11,13 +10,14 @@ import com.hrstack.dto.requestDto.OtpRequest;
 import com.hrstack.mappers.UserMapper;
 import com.hrstack.orders.OrderProducer;
 import com.hrstack.orders.ProducerMessage;
-import com.hrstack.repositories.OtpRepository;
 import com.hrstack.repositories.UserRepository;
 import com.hrstack.security.JwtService;
 import com.hrstack.utils.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,8 +25,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final CurrentUserUtil currentUserUtil;
-    private final OtpRepository otpRepository;
+    private final RedisSessionService redisSessionService;
 
 
     @Override
@@ -101,14 +101,27 @@ public class UserServiceImpl implements UserService {
         if (!Boolean.TRUE.equals(user.getIsVerified())) {
             throw new InvalidRequestException("User not verified");
         }
+        String sessionId = UUID.randomUUID().toString();
+        redisSessionService.saveSession(
+                sessionId,
+                user.getId()
+        );
+        redisSessionService.saveRefreshSession(
+                sessionId,
+                user.getId()
+        );
         String accessToken = jwtService.generateAccessToken(
                 user.getWorkspaceUrl(),
                 user.getId(),
-                user.getRole().name());
+                user.getRole().name(),
+                sessionId
+                );
         String refreshToken = jwtService.generateRefreshToken(
                 user.getWorkspaceUrl(),
                 user.getId(),
-                user.getRole().name());
+                user.getRole().name(),
+                sessionId);
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -117,73 +130,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse refreshToken(final RefreshTokenRequest request) {
-        final String refreshToken = request.getRefreshToken();
+    public LoginResponse refreshToken(RefreshTokenRequest request) {
+        String refreshToken = request.getRefreshToken();
         if (!jwtService.isRefreshToken(refreshToken)) {
-            log.debug("Invalid refresh token");
             throw new InvalidRequestException("Invalid refresh token");
         }
-        jwtService.validateToken(refreshToken);
+
+        String sessionId = jwtService.getSessionId(refreshToken);
+        if (!redisSessionService.isRefreshSessionActive(sessionId)) {
+            throw new InvalidRequestException("Refresh session expired");
+        }
+
         String userId = jwtService.getUserIdFromRefreshToken(refreshToken);
-        final User user = userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        final String newAccessToken = jwtService.generateAccessToken(
+        redisSessionService.saveSession(sessionId, user.getId());
+        redisSessionService.saveRefreshSession(sessionId, user.getId());
+
+        String newAccessToken = jwtService.generateAccessToken(
                 user.getWorkspaceUrl(),
                 user.getId(),
-                user.getRole().name());
-        final String newRefreshToken = jwtService.generateRefreshToken(
+                user.getRole().name(),
+                sessionId);
+        String newRefreshToken = jwtService.generateRefreshToken(
                 user.getWorkspaceUrl(),
                 user.getId(),
-                user.getRole().name());
-        return new LoginResponse(newAccessToken, newRefreshToken, "Bearer");
+                user.getRole().name(),
+                sessionId);
+        return LoginResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
+                .build();
     }
 
-//    @Override
-//    public void logout(HttpServletRequest request) {
-//        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            log.debug("Invalid authorization header");
-//            throw new InvalidRequestException("Invalid authorization header");
-//        }
-//        String token = authHeader.substring(7);
-//        UserSession userSession = userSessionRepository.findByAccessToken(token)
-//                .orElseThrow(() -> new InvalidRequestException("Session already ended"));
-//        Instant expiryDate = jwtService.extractExpiration(token).toInstant();
-//
-//        LogoutToken logoutToken = LogoutToken.builder()
-//                .token(token)
-//                .expiryDate(expiryDate)
-//                .userSession(userSession)
-//                .build();
-//        logoutTokenRepository.save(logoutToken);
-//
-//        userSession.setRevoked(true);
-//        userSession.setAccessToken("used");
-//        userSessionRepository.save(userSession);
-//    }
-//
-//
-//    @Override
-//    public void revokeSession(String accessToken) {
-//        UserSession session = userSessionRepository.findByAccessToken(accessToken)
-//                .orElseThrow(() -> new DuplicateResourceException("Session already ended"));
-//        if (session.isRevoked()){
-//            throw new UnauthorizedException("Session has been revoked");
-//        }
-//
-//        Instant expiryDate = jwtService.extractExpiration(accessToken).toInstant();
-//        LogoutToken logoutToken = LogoutToken.builder()
-//                .token(accessToken)
-//                .expiryDate(expiryDate)
-//                .userSession(session)
-//                .build();
-//
-//        session.setRevoked(true);
-//        session.setAccessToken("used");
-//        logoutTokenRepository.save(logoutToken);
-//        userSessionRepository.save(session);
-//    }
-//
+
     @Override
     public void changePassword(ChangePasswordRequest request) {
         User loggedInUser = currentUserUtil.getLoggedInUser();
@@ -239,5 +220,22 @@ public class UserServiceImpl implements UserService {
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Override
+    public void logout(HttpServletRequest request) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new InvalidRequestException("Invalid authorization header");
+        }
+
+        String token = authHeader.substring(7);
+        jwtService.validateToken(token);
+        if (!jwtService.isAccessToken(token)) {
+            throw new InvalidRequestException("Invalid access token");
+        }
+
+        String sessionId = jwtService.getSessionId(token);
+       redisSessionService.deleteAll(sessionId);
     }
 }
