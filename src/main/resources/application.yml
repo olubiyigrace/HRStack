@@ -7,8 +7,8 @@ spring:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: jdbc:postgresql://localhost:${DB_PORT}/${DB_NAME}
-    username: postgres
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
@@ -44,10 +44,10 @@ spring:
     validate-on-migrate: true
 
   mail:
-    host: smtp.gmail.com
-    port: 465
-    username: multitenantbank@gmail.com
-    password: dhmj rivz ftmg osoo
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${SUPPORT_EMAIL}
+    password: ${APP_PASSWORD}
     properties:
       mail:
        smtp:
@@ -71,17 +71,17 @@ spring:
     password: guest
 
 server:
-  port: 8080
+  port: ${SERVER_PORT}
 
 app:
   jwt:
     private-key-path: certs/private_key.pem
     public-key-path: certs/public_key.pem
-    access-token-expiration: 900000
-    refresh-token-expiration: 604800000
+    access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION}
 
   workspace:
-    base-url: https://hrstack.app/
+    base-url: ${BASE_URL}
 
 springdoc:
   default-produces-media-type: application/json
