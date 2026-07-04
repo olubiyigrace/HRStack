@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -52,18 +54,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(true, "login successful", response));
     }
 
-    @GetMapping("/accept-invite")
+    @PostMapping("/accept-invite")
     public void acceptInvite(@RequestParam String token, HttpServletResponse response) throws IOException {
         Claims claims = jwtService.validateWorkspaceInviteToken(token);
         userService.validateWorkspaceInvite(token, claims);
-        response.sendRedirect("/api/v1/invited-users-login?token=" + token);
-    }
-
-    @GetMapping("/invited-users-login")
-    public ModelAndView invitedUsersLoginPage(@RequestParam String token) {
-        ModelAndView mv = new ModelAndView("invited-users-login");
-        mv.addObject("token", token);
-        return mv;
+        response.sendRedirect("https://app.hrstack.com/validate?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8));
     }
 
     @PostMapping("/invited-user-login")

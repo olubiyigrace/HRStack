@@ -6,6 +6,7 @@ import com.hrstack.enums.InviteStatus;
 import com.hrstack.services.UserService;
 import com.hrstack.utils.ApiResponse;
 import com.hrstack.utils.PageResponse;
+import com.hrstack.utils.ResendInviteRequest;
 import com.hrstack.utils.UpdateUserRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,12 @@ public class AdminController {
     @PostMapping("/register-user")
     public ResponseEntity<ApiResponse<String>> createUser(@Valid @RequestBody RegisterUserRequest request){
         userService.createUser(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "User created successfully", null));
+    }
+
+    @PostMapping("/resend-invite")
+    public ResponseEntity<ApiResponse<String>> resendInvite(@RequestParam String id, @Valid @RequestBody ResendInviteRequest request){
+        userService.resendInvite(id, request);
         return ResponseEntity.ok(ApiResponse.success(true, "User created successfully", null));
     }
 

@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
         model.put("companyName", loggedInUser.getCompany().getCompanyName());
         model.put("role", newUser.getRole());
         model.put("password", request.getPassword());
-        model.put("inviteLink", "http://localhost:8080/api/v1/accept-invite?token=" + inviteToken);
+        model.put("inviteLink", "https://app.hrstack.com/api/v1/accept-invite?token=" + inviteToken);
 
         try {
             emailService.sendVerificationEmail(
@@ -100,6 +100,42 @@ public class UserServiceImpl implements UserService {
             );
         } catch (MessagingException | UnsupportedEncodingException e) {
             throw new RuntimeException("Failed to send invite to " + request.getEmail(), e);
+        }
+    }
+
+    @Override
+    public void resendInvite(String id, ResendInviteRequest request){
+        User loggedInUser = currentUserUtil.getLoggedInUser();
+
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new InvalidRequestException("User does not exist"));
+        if(!existingUser.getStatus().equals(InviteStatus.DECLINED)){
+            throw  new InvalidRequestException("Invite can only be resent to users with a declined invite status");
+        }
+        String inviteToken = jwtService.generateWorkspaceInviteToken(existingUser.getId(), existingUser.getEmail(), loggedInUser.getCompanyId());
+        existingUser.setInviteToken(inviteToken);
+        existingUser.setExpiresAt(LocalDateTime.now().plusDays(7));
+        existingUser.setStatus(InviteStatus.PENDING);
+        existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(existingUser);
+
+        Map<String, Object> model = new HashMap<>();
+        model.put("name", existingUser.getFirstName() + " " + existingUser.getLastName());
+        model.put("adminName", loggedInUser.getFirstName() + " " + loggedInUser.getLastName());
+        model.put("companyName", loggedInUser.getCompany().getCompanyName());
+        model.put("role", existingUser.getRole());
+        model.put("password", request.getPassword());
+        model.put("inviteLink", "https://app.hrstack.com/api/v1/accept-invite?token=" + inviteToken);
+
+        try {
+            emailService.sendVerificationEmail(
+                    existingUser.getEmail(),
+                    loggedInUser.getCompany().getCompanyName() + " Workspace Invite",
+                    "workspaceInvite",
+                    model
+            );
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send invite to " + existingUser.getEmail(), e);
         }
     }
 
@@ -145,7 +181,6 @@ public class UserServiceImpl implements UserService {
     public User validateWorkspaceInvite(String token, Claims claims) {
         User user = userRepository.findByInviteToken(token)
                 .orElseThrow(() -> new InvalidRequestException("Invitation not found."));
-
         if (user.getStatus() == InviteStatus.ACCEPTED) {
             throw new InvalidRequestException("Invitation has already been accepted.");
         }
@@ -407,11 +442,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deactivateUser(String id) {
-
-    }
-
-    @Override
-    public void resendInviteLink(String id) {
 
     }
 }

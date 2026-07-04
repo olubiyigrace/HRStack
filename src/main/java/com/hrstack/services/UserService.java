@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     void createUser(RegisterUserRequest registerUserRequest);
-    void resendInviteLink(String id);
+    void resendInvite(String id, ResendInviteRequest request);
     PageResponse<UserResponse> getAllUsersByStatus(InviteStatus inviteStatus, int page, int size);
     PageResponse<UserResponse> getAllUsers(int page, int size);
     void updateUser(String id, UpdateUserRequest request);
