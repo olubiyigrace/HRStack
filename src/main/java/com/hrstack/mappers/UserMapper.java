@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class UserMapper {
-    private final PasswordEncoder passwordEncoder;
 
     public User toEntity(RegisterUserRequest request){
         return User.builder()
@@ -22,7 +21,6 @@ public class UserMapper {
                 .jobTitle(request.getJobTitle())
                 .department(request.getDepartment())
                 .phoneNumber(request.getPhoneNumber())
-                .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .role(request.getRole())
                 .build();

@@ -22,7 +22,7 @@ create table users
     expires_at      timestamp(6),
     email           varchar(255) not null,
     job_title       varchar(255),
-    invite_token    varchar(255),
+    invite_token    text,
     department      varchar(255),
     phone_number    varchar(255),
     image_url       varchar(255),

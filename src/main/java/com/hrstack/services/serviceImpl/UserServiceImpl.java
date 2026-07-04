@@ -74,8 +74,11 @@ public class UserServiceImpl implements UserService {
         }
         User newUser = userMapper.toEntity(request);
         newUser.setCompany(Company.builder().id(loggedInUser.getCompanyId()).build());
-        String inviteToken = jwtService.generateWorkspaceInviteToken(newUser.getId(), newUser.getEmail(), loggedInUser.getCompanyId());
         newUser.setStatus(InviteStatus.PENDING);
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(newUser);
+
+        String inviteToken = jwtService.generateWorkspaceInviteToken(newUser.getId(), newUser.getEmail(), loggedInUser.getCompanyId());
         newUser.setInviteToken(inviteToken);
         newUser.setExpiresAt(LocalDateTime.now().plusDays(7));
         userRepository.save(newUser);
@@ -85,7 +88,8 @@ public class UserServiceImpl implements UserService {
         model.put("adminName", loggedInUser.getFirstName() + " " + loggedInUser.getLastName());
         model.put("companyName", loggedInUser.getCompany().getCompanyName());
         model.put("role", newUser.getRole());
-        model.put("inviteLink", "https://hrstack.app/api/v1/login?token=" + inviteToken);
+        model.put("password", request.getPassword());
+        model.put("inviteLink", "https://hrstack.app/api/v1/accept-invite?token=" + inviteToken);
 
         try {
             emailService.sendVerificationEmail(

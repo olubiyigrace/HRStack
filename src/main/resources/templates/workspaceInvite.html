@@ -32,9 +32,6 @@
                    border-radius:20px;
                    overflow:hidden;">
 
-                <!-- ========================= -->
-                <!-- HEADER -->
-                <!-- ========================= -->
 
                 <tr>
 
@@ -43,7 +40,6 @@
                         background:linear-gradient(135deg,#5B21B6,#7C3AED,#8B5CF6);
                         padding:55px 40px;">
 
-                        <!-- Logo -->
 
                         <img th:if="${logoUrl != null}"
                              th:src="${logoUrl}"
@@ -76,9 +72,6 @@
 
                 </tr>
 
-                <!-- ========================= -->
-                <!-- BODY -->
-                <!-- ========================= -->
 
                 <tr>
 
@@ -124,12 +117,10 @@
                             view payroll (if enabled),
                             receive company announcements,
                             and collaborate with your team.
+                            Use the provided password below to sign in.
 
                         </p>
 
-                        <!-- ========================= -->
-                        <!-- INVITATION DETAILS -->
-                        <!-- ========================= -->
 
                         <table role="presentation"
                                width="100%"
@@ -211,7 +202,29 @@
                                                 color:#777777;
                                                 font-size:16px;">
 
-                                                Assigned Role
+                                                Password
+
+                                            </td>
+
+                                            <td style="
+                                                color:#222222;
+                                                font-size:18px;
+                                                font-weight:bold;"
+                                                th:text="${password}">
+
+                                                John Doe
+
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+
+                                            <td style="
+                                                color:#777777;
+                                                font-size:16px;">
+
+                                                Role
 
                                             </td>
 
@@ -234,9 +247,7 @@
                             </tr>
 
                         </table>
-                        <!-- ========================= -->
-                        <!-- ACCEPT INVITATION BUTTON -->
-                        <!-- ========================= -->
+
 
                         <table role="presentation"
                                width="100%"
@@ -270,9 +281,7 @@
 
                         </table>
 
-                        <!-- ========================= -->
-                        <!-- EXPIRATION NOTICE -->
-                        <!-- ========================= -->
+
 
                         <table role="presentation"
                                width="100%"
@@ -320,9 +329,7 @@
 
                         </table>
 
-                        <!-- ========================= -->
-                        <!-- DIVIDER -->
-                        <!-- ========================= -->
+
 
                         <table role="presentation"
                                width="100%"
@@ -342,45 +349,6 @@
 
                         </table>
 
-                        <!-- ========================= -->
-                        <!-- BACKUP LINK -->
-                        <!-- ========================= -->
-
-                        <p style="
-                                margin:35px 0 0;
-                                text-align:center;
-                                color:#444444;
-                                font-size:18px;
-                                line-height:30px;">
-
-                            If the button above doesn't work,
-                            copy and paste the link below into
-                            your browser.
-
-                        </p>
-
-                        <p style="
-                                margin:18px 0 0;
-                                text-align:center;
-                                word-break:break-word;">
-
-                            <a th:href="${inviteLink}"
-                               th:text="${inviteLink}"
-                               style="
-                               color:#6D28D9;
-                               font-size:17px;
-                               text-decoration:none;
-                               font-weight:bold;">
-
-                                https://app.hrstack.com/invite/xxxxxxxx
-
-                            </a>
-
-                        </p>
-
-                        <!-- ========================= -->
-                        <!-- SECURITY NOTICE -->
-                        <!-- ========================= -->
 
                         <table role="presentation"
                                width="100%"
@@ -431,9 +399,7 @@
                     </td>
 
                 </tr>
-                <!-- ========================= -->
-                <!-- FOOTER -->
-                <!-- ========================= -->
+
 
                 <tr>
 

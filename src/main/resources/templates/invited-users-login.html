@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Stack | Invited User Login</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            background:#f4f6fb;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+        }
+
+        .card{
+            width:420px;
+            background:#fff;
+            border-radius:12px;
+            padding:35px;
+            box-shadow:0 10px 30px rgba(0,0,0,.1);
+        }
+
+        h2{
+            color:#5B2EFF;
+            margin-bottom:10px;
+            text-align:center;
+        }
+
+        p{
+            text-align:center;
+            color:#666;
+            margin-bottom:30px;
+            line-height:1.5;
+        }
+
+        label{
+            display:block;
+            margin-bottom:6px;
+            font-weight:600;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            margin-bottom:18px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            font-size:15px;
+        }
+
+        button{
+            width:100%;
+            padding:14px;
+            background:#5B2EFF;
+            color:#fff;
+            border:none;
+            border-radius:8px;
+            font-size:16px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#4a25d8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <h2>Workspace Invitation</h2>
+
+    <p>
+        Sign in to accept your workspace invitation.
+    </p>
+
+    <form
+            th:action="@{/api/v1/users/invited-users-login}"
+            method="post">
+
+        <input
+                type="hidden"
+                name="inviteToken"
+                th:value="${token}" />
+
+        <label>Email</label>
+
+        <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                required>
+
+        <label>Password</label>
+
+        <input
+                type="password"
+                name="password"
+                placeholder="Enter your password"
+                required>
+
+        <button type="submit">
+            Login & Accept Invitation
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

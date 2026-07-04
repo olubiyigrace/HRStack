@@ -162,13 +162,10 @@ public class JwtService {
     }
 
     public String generateWorkspaceInviteToken(String userId, String email, String companyId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("companyId", companyId);
-        claims.put("purpose", "WORKSPACE_INVITE");
-
         return Jwts.builder()
-                .claims(claims)
+                .claim("userId", userId)
+                .claim("companyId", companyId)
+                .claim("purpose", "WORKSPACE_INVITE")
                 .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000))

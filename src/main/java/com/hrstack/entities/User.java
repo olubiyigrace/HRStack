@@ -51,6 +51,8 @@ public class User implements UserDetails {
     private String phoneNumber;
     private String imageUrl;
     private String imagePublicId;
+
+    @Column(name = "invite_token", columnDefinition = "text")
     private String inviteToken;
 
     @Column(nullable = false)
