@@ -1,4 +1,4 @@
-package com.hrstack.services;
+package com.hrstack.services.serviceImpl;
 
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
 import com.hrstack.dto.requestDto.RegisterUserRequest;
@@ -17,11 +17,13 @@ import com.hrstack.orders.OrderProducer;
 import com.hrstack.orders.ProducerMessage;
 import com.hrstack.repositories.UserRepository;
 import com.hrstack.security.JwtService;
+import com.hrstack.services.*;
 import com.hrstack.utils.*;
+import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -59,35 +61,42 @@ public class UserServiceImpl implements UserService {
     @Override
     public void createUser(RegisterUserRequest request) {
         User loggedInUser = currentUserUtil.getLoggedInUser();
+        if(loggedInUser.getFirstName().isBlank() && loggedInUser.getLastName().isBlank()){
+            throw new UnauthorizedException("Edit your profile to have a name as the admin");
+        }
             Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-            if (existingUser.isPresent()) {
-                log.debug("User with the email '{}' already exists.", request.getEmail());
-                throw new DuplicateResourceException("Workspace user already exists");
-            }
-            if (request.getRole() == Role.ADMIN) {
-                throw new InvalidRequestException(" Admin role cannot be selected");
-            }
-            User newUser = userMapper.toEntity(request);
-            newUser.setCompany(Company.builder().id(loggedInUser.getCompanyId()).build());
-            newUser.setStatus(InviteStatus.PENDING);
-            userRepository.save(newUser);
+        if (existingUser.isPresent()) {
+            log.debug("User with the email '{}' already exists.", request.getEmail());
+            throw new DuplicateResourceException("Workspace user already exists");
+        }
+        if (request.getRole() == Role.ADMIN) {
+            throw new InvalidRequestException(" Admin role cannot be selected");
+        }
+        User newUser = userMapper.toEntity(request);
+        newUser.setCompany(Company.builder().id(loggedInUser.getCompanyId()).build());
+        String inviteToken = jwtService.generateWorkspaceInviteToken(newUser.getId(), newUser.getEmail(), loggedInUser.getCompanyId());
+        newUser.setStatus(InviteStatus.PENDING);
+        newUser.setInviteToken(inviteToken);
+        newUser.setExpiresAt(LocalDateTime.now().plusDays(7));
+        userRepository.save(newUser);
 
-            Map<String, Object> model = new HashMap<>();
-            model.put("name", request.getFirstName() + " " + request.getLastName());
-            model.put("adminName", loggedInUser.getFirstName() + " " + loggedInUser.getLastName());
-            model.put("companyName", loggedInUser.getCompany().getCompanyName());
-            model.put("role", newUser.getRole());
-            model.put("inviteLink", "https://hrstack.app/api/v1/invite?token=" + newUser.getId() + loggedInUser.getCompanyId());
-            try {
-                emailService.sendVerificationEmail(
-                        request.getEmail(),
-                        loggedInUser.getCompany().getCompanyName() + " Workspace Invite",
-                        "workspaceInvite",
-                        model
-                );
-            } catch (MessagingException | UnsupportedEncodingException e) {
-                throw new RuntimeException("Failed to send invite to " + request.getEmail(), e);
-            }
+        Map<String, Object> model = new HashMap<>();
+        model.put("name", request.getFirstName() + " " + request.getLastName());
+        model.put("adminName", loggedInUser.getFirstName() + " " + loggedInUser.getLastName());
+        model.put("companyName", loggedInUser.getCompany().getCompanyName());
+        model.put("role", newUser.getRole());
+        model.put("inviteLink", "https://hrstack.app/api/v1/login?token=" + inviteToken);
+
+        try {
+            emailService.sendVerificationEmail(
+                    request.getEmail(),
+                    loggedInUser.getCompany().getCompanyName() + " Workspace Invite",
+                    "workspaceInvite",
+                    model
+            );
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send invite to " + request.getEmail(), e);
+        }
     }
 
     @Override
@@ -129,8 +138,83 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(String id) {
+    public User validateWorkspaceInvite(String token, Claims claims) {
+        User user = userRepository.findByInviteToken(token)
+                .orElseThrow(() -> new InvalidRequestException("Invitation not found."));
 
+        if (user.getStatus() == InviteStatus.ACCEPTED) {
+            throw new InvalidRequestException("Invitation has already been accepted.");
+        }
+        if (user.getStatus() == InviteStatus.DECLINED) {
+            throw new InvalidRequestException("Invitation has already been declined.");
+        }
+        if (LocalDateTime.now().isAfter(user.getExpiresAt())) {
+            user.setStatus(InviteStatus.DECLINED);
+            user.setInviteToken(null);
+            user.setExpiresAt(null);
+            userRepository.save(user);
+            throw new InvalidRequestException("Invitation has expired.");
+        }
+
+        String invitedUserId = claims.get("userId", String.class);
+        String invitedCompanyId = claims.get("companyId", String.class);
+        String invitedEmail = claims.getSubject();
+        if (!user.getId().equals(invitedUserId)) {
+            throw new InvalidRequestException("Invalid invitation.");
+        }
+        if (!user.getCompanyId().equals(invitedCompanyId)) {
+            throw new InvalidRequestException("Invalid company invitation.");
+        }
+        if (!user.getEmail().equalsIgnoreCase(invitedEmail)) {
+            throw new InvalidRequestException("This invitation belongs to another email.");
+        }
+        return user;
+    }
+
+    @Override
+    public LoginResponse invitedUserLogin(InvitedUserLoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+        User authenticatedUser = (User) authentication.getPrincipal();
+        Claims claims = jwtService.validateWorkspaceInviteToken(request.getInviteToken());
+
+        User invitedUser = validateWorkspaceInvite(request.getInviteToken(), claims);
+        if (!authenticatedUser.getId().equals(invitedUser.getId())) {
+            throw new InvalidRequestException("This invitation does not belong to this account.");
+        }
+        invitedUser.setStatus(InviteStatus.ACCEPTED);
+        invitedUser.setInviteToken(null);
+        invitedUser.setExpiresAt(null);
+        userRepository.save(invitedUser);
+
+        String sessionId = UUID.randomUUID().toString();
+        redisSessionService.saveSession(
+                sessionId,
+                authenticatedUser.getId()
+        );
+        redisSessionService.saveRefreshSession(
+                sessionId,
+                authenticatedUser.getId()
+        );
+
+        String accessToken = jwtService.generateAccessToken(
+                authenticatedUser.getCompanyId(),
+                authenticatedUser.getId(),
+                authenticatedUser.getRole().name(),
+                sessionId
+        );
+        String refreshToken = jwtService.generateRefreshToken(
+                authenticatedUser.getCompanyId(),
+                authenticatedUser.getId(),
+                authenticatedUser.getRole().name(),
+                sessionId
+        );
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .build();
     }
 
     @Override
@@ -206,7 +290,6 @@ public class UserServiceImpl implements UserService {
                 .tokenType("Bearer")
                 .build();
     }
-
 
     @Override
     public void changePassword(ChangePasswordRequest request) {
@@ -316,6 +399,16 @@ public class UserServiceImpl implements UserService {
         user.setImageUrl(response.getImageUrl());
         user.setImagePublicId(response.getPublicId());
         userRepository.save(user);
+    }
+
+    @Override
+    public void deactivateUser(String id) {
+
+    }
+
+    @Override
+    public void resendInviteLink(String id) {
+
     }
 }
 

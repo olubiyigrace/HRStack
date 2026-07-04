@@ -1,4 +1,4 @@
-package com.hrstack.services;
+package com.hrstack.services.serviceImpl;
 
 import com.hrstack.dto.requestDto.OtpRequest;
 import com.hrstack.dto.requestDto.RegisterCompanyRequest;
@@ -14,6 +14,8 @@ import com.hrstack.orders.ProducerMessage;
 import com.hrstack.properties.WorkspaceProperties;
 import com.hrstack.repositories.CompanyRepository;
 import com.hrstack.repositories.UserRepository;
+import com.hrstack.services.CompanyService;
+import com.hrstack.services.OtpService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +28,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class CompanyServiceImpl implements CompanyService{
+public class CompanyServiceImpl implements CompanyService {
     private final WorkspaceProperties workspaceProperties;
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;

@@ -51,6 +51,7 @@ public class User implements UserDetails {
     private String phoneNumber;
     private String imageUrl;
     private String imagePublicId;
+    private String inviteToken;
 
     @Column(nullable = false)
     private String password;
@@ -65,6 +66,9 @@ public class User implements UserDetails {
     @CreatedDate
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
     private LocalDateTime createdAt;
+
+    @JsonFormat(shape= JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
+    private LocalDateTime expiresAt;
 
     @JsonFormat(shape= JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
     private  LocalDateTime updatedAt;

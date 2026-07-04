@@ -3,17 +3,21 @@ package com.hrstack.services;
 import com.hrstack.dto.requestDto.RefreshTokenRequest;
 import com.hrstack.dto.requestDto.RegisterUserRequest;
 import com.hrstack.dto.responseDto.UserResponse;
+import com.hrstack.entities.User;
 import com.hrstack.enums.InviteStatus;
 import com.hrstack.utils.*;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     void createUser(RegisterUserRequest registerUserRequest);
+    void resendInviteLink(String id);
     PageResponse<UserResponse> getAllUsersByStatus(InviteStatus inviteStatus, int page, int size);
     PageResponse<UserResponse> getAllUsers(int page, int size);
     void updateUser(String id, UpdateUserRequest request);
-    void deleteUser(String id);
+    User validateWorkspaceInvite(String token, Claims claims);
+    LoginResponse invitedUserLogin(InvitedUserLoginRequest request);
     LoginResponse login(LoginRequest request);
     LoginResponse refreshToken(RefreshTokenRequest request);
     void changePassword(ChangePasswordRequest request);
@@ -22,5 +26,5 @@ public interface UserService {
     void logout(HttpServletRequest request);
     void editProfile(EditProfileRequest editProfileRequest);
     void uploadProfilePicture(MultipartFile file);
-
+    void deactivateUser(String id);
 }

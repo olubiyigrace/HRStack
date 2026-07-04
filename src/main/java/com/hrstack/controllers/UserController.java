@@ -1,8 +1,11 @@
 package com.hrstack.controllers;
 
+import com.hrstack.security.JwtService;
 import com.hrstack.services.UserService;
 import com.hrstack.utils.*;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -10,12 +13,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @RestController
 public class UserController {
     private final UserService userService;
-
+    private final JwtService jwtService;
 
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
@@ -39,5 +44,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<String>> uploadProfilePicture(@RequestParam("file") MultipartFile file) {
         userService.uploadProfilePicture(file);
         return ResponseEntity.ok(ApiResponse.success(true, "Profile picture uploaded successfully.", null));
+    }
+
+    @GetMapping("/accept-invite")
+    public void acceptInvite(@RequestParam String token, HttpServletResponse response) throws IOException {
+        Claims claims = jwtService.validateWorkspaceInviteToken(token);
+        userService.validateWorkspaceInvite(token, claims);
+        response.sendRedirect("https://hrstack.app/invited-users-login?token=" + token);
     }
 }

@@ -45,6 +45,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(true, "login successful", response));
     }
 
+    @PostMapping("/invited-user-login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody InvitedUserLoginRequest request) {
+        final LoginResponse response = userService.invitedUserLogin(request);
+        return ResponseEntity.ok(ApiResponse.success(true, "login successful", response));
+    }
+
     @PostMapping("/refresh-token")
     public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         final LoginResponse response = userService.refreshToken(request);

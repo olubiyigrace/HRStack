@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
     Page<User> findByCompanyAndStatus(Company company, InviteStatus inviteStatus, PageRequest pageRequest);
     Page<User> findByCompany(Company company, PageRequest pageRequest);
+    Optional<User> findByInviteToken(String token);
 }

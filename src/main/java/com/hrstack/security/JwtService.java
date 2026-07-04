@@ -18,6 +18,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -157,6 +159,34 @@ public class JwtService {
             throw new InvalidRequestException("Invalid reset token");
         }
         return claims.getSubject();
+    }
+
+    public String generateWorkspaceInviteToken(String userId, String email, String companyId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("companyId", companyId);
+        claims.put("purpose", "WORKSPACE_INVITE");
+
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000))
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
+    public Claims validateWorkspaceInviteToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        String purpose = claims.get("purpose", String.class);
+
+        if (!"WORKSPACE_INVITE".equals(purpose)) {
+            throw new InvalidRequestException("Invalid workspace invitation.");
+        }
+        if (claims.getExpiration().before(new Date())) {
+            throw new InvalidRequestException("Workspace invitation has expired.");
+        }
+        return claims;
     }
 
     private PrivateKey loadPrivateKey(final String privateKeyPath) throws Exception {
