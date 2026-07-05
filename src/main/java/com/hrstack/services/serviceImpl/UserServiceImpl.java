@@ -269,7 +269,7 @@ public class UserServiceImpl implements UserService {
         if(user.getRole().equals(Role.ADMIN) && user.getCompany().getIsVerified().equals(false)){
             throw new UnauthorizedException("Verify your email to continue");
         }
-        if(!user.getUserProfileStatus().equals(UserProfileStatus.ACTIVE)){
+        if(!user.getRole().equals(Role.ADMIN) && !user.getUserProfileStatus().equals(UserProfileStatus.ACTIVE)){
             throw new UnauthorizedException("Only an active user can login");
         }
         String sessionId = UUID.randomUUID().toString();

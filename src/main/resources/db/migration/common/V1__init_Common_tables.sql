@@ -7,7 +7,7 @@ create table companies
     is_verified         boolean,
     workspace_url       varchar(255) not null unique,
     admin_password      varchar(255) not null,
-    user_profile_status varchar(255) not null
+    user_profile_status varchar(255)
         constraint companies_user_profile_status_check
             check (
                 (user_profile_status)::text = ANY (
@@ -71,7 +71,7 @@ create table users
         ('MANAGER':: character varying)::text
         ]
         )),
-    user_profile_status varchar(255) not null
+    user_profile_status varchar(255)
         constraint users_user_profile_status_check
             check (
                 (user_profile_status)::text = ANY (
