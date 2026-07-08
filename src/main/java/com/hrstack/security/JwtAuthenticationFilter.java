@@ -3,6 +3,7 @@ package com.hrstack.security;
 import com.hrstack.exceptions.InvalidRequestException;
 import com.hrstack.exceptions.UnauthorizedException;
 import com.hrstack.services.RedisSessionService;
+import com.hrstack.tenant.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
