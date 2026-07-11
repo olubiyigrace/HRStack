@@ -44,7 +44,7 @@ public class AdminController {
     }
 
     @GetMapping("/all-users")
-    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllLoanApplications(
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllUsers(
             @RequestParam(name = "page", defaultValue = "0") final int page,
             @RequestParam(name = "size", defaultValue = "10") final int size) {
         return ResponseEntity.ok(ApiResponse.success(true, "Users retrieved successfully",
